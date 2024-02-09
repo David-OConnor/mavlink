@@ -1,0 +1,18 @@
+[package]
+name = "mavlink"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+num_enum = { version = "^0.7.0", default_features = false }
+
+hal = { package = "stm32-hal2", path = "../../stm32-hal", optional = true }
+defmt = "^0.3.5"
+lin_alg = { package = "lin-alg2", path = "../lin_alg", features = ["no_std"]  }
+
+[features]
+hal = []
+hal_g431 = ["hal/g431", "hal"]
+hal_g473 = ["hal/g473", "hal"]
+hal_h7 = ["hal/h743v", "hal"] # todo: OTG
