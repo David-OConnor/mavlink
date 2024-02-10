@@ -1,4 +1,4 @@
-use crate::MavId;
+use crate::MessageType;
 
 use lin_alg::f32::Quaternion;
 
@@ -25,12 +25,12 @@ impl GimbalDeviceSetAttitude {
         }
     }
 
-    pub fn to_bytes(&self) -> [u8; MavId::GimbalDeviceSetAttitude.payload_size()] {
-        let mut result = [0; MavId::GimbalDeviceSetAttitude.payload_size()];
+    pub fn to_bytes(&self) -> [u8; MessageType::GimbalDeviceSetAttitude.payload_size()] {
+        let mut result = [0; MessageType::GimbalDeviceSetAttitude.payload_size()];
 
         result[0] = self.target_system;
         result[1] = self.target_component;
-        result[2..3].clone_from_slice(&self.flags.to_le_bytes());
+        result[2..4].clone_from_slice(&self.flags.to_le_bytes());
         result[4..8].clone_from_slice(&self.q.w.to_le_bytes());
         result[8..12].clone_from_slice(&self.q.x.to_le_bytes());
         result[12..16].clone_from_slice(&self.q.y.to_le_bytes());

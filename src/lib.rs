@@ -24,7 +24,7 @@ pub use messages::*;
 
 #[repr(u32)]
 #[derive(Clone, Copy)]
-pub enum MavId {
+pub enum MessageType {
     VehicleToGc = 1_000,
     GcToVehicle = 1_001,
     SystemStatus = 1_002,
@@ -32,7 +32,7 @@ pub enum MavId {
     GimbalDeviceAttitudeStatus = 285,
 }
 
-impl MavId {
+impl MessageType {
     pub const fn payload_size(&self) -> usize {
         match self {
             Self::VehicleToGc => 48,
@@ -40,6 +40,17 @@ impl MavId {
             Self::SystemStatus => 2,
             Self::GimbalDeviceSetAttitude => 32,
             Self::GimbalDeviceAttitudeStatus => 285, // todo
+        }
+    }
+
+    pub const fn crc_extra(&self) -> u8 {
+        match self {
+            Self::VehicleToGc => 0,
+            Self::GcToVehicle => 0,
+            Self::SystemStatus => 0,
+            // todo!
+            Self::GimbalDeviceSetAttitude => 69,
+            Self::GimbalDeviceAttitudeStatus => 69,
         }
     }
 
@@ -117,11 +128,11 @@ pub struct MavlinkPacket {
     pub compid: u8,
     /// ID of message type in payload. Used to decode data back into message object.
     /// 24 bytes.
-    pub message_id: u32,
+    pub message_type: MessageType,
 }
 
 impl MavlinkPacket {
-    pub fn new(message_id: u32) -> Self {
+    pub fn new(message_type: MessageType) -> Self {
         Self {
             incompat_flags: 0,
             compat_flags: 0,
@@ -129,15 +140,14 @@ impl MavlinkPacket {
             sequence_number: SEQUENCE_NUMBER.fetch_add(1, Ordering::Relaxed),
             sysid: SYSTEM_ID,
             compid: COMPONENT_ID,
-            message_id,
+            message_type,
         }
     }
 
     pub fn to_buf(&self, buf: &mut [u8], payload: &[u8], payload_len: u8) {
         // todo: Error handling on buffer len.
 
-        let crc_extra = 0; // todo
-        let checksum = crc_calculate(payload, payload_len as u16, crc_extra);
+        let checksum = crc_calculate(payload, payload_len as u16, self.message_type.crc_extra());
 
         buf[0] = MAVLINK_MSG_START;
         buf[1] = payload_len;
@@ -147,7 +157,7 @@ impl MavlinkPacket {
         buf[5] = self.sysid;
         buf[6] = self.compid;
         // todo: is this order right? "low, middle, high". Seems to be from tests.
-        buf[7..10].clone_from_slice(&self.message_id.to_le_bytes()[..3]);
+        buf[7..10].clone_from_slice(&(self.message_type as u32).to_le_bytes()[..3]);
         buf[10..10 + payload_len as usize].clone_from_slice(&payload[..payload_len as usize]);
         buf[10 + payload_len as usize..12 + payload_len as usize]
             .clone_from_slice(&checksum.to_le_bytes());
