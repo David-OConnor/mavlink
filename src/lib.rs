@@ -22,9 +22,11 @@ pub struct ParseError {}
 pub mod messages;
 pub use messages::*;
 
+static SEQUENCE_NUMBER: AtomicU8 = AtomicU8::new(0);
+
 #[repr(u32)]
 #[derive(Clone, Copy)]
-pub enum MessageType {
+pub enum MsgType {
     VehicleToGc = 1_000,
     GcToVehicle = 1_001,
     SystemStatus = 1_002,
@@ -32,14 +34,14 @@ pub enum MessageType {
     GimbalDeviceAttitudeStatus = 285,
 }
 
-impl MessageType {
+impl MsgType {
     pub const fn payload_size(&self) -> usize {
         match self {
             Self::VehicleToGc => 48,
             Self::GcToVehicle => 29,
             Self::SystemStatus => 2,
-            Self::GimbalDeviceSetAttitude => 32,
-            Self::GimbalDeviceAttitudeStatus => 285, // todo
+            Self::GimbalDeviceSetAttitude => 99,
+            Self::GimbalDeviceAttitudeStatus => 137,
         }
     }
 
@@ -67,8 +69,6 @@ impl MessageType {
         })
     }
 }
-
-static SEQUENCE_NUMBER: AtomicU8 = AtomicU8::new(0);
 
 // #[repr(u32)]
 // /// Only the ones we use. u32 repr is the message id.
@@ -128,11 +128,11 @@ pub struct MavlinkPacket {
     pub compid: u8,
     /// ID of message type in payload. Used to decode data back into message object.
     /// 24 bytes.
-    pub message_type: MessageType,
+    pub message_type: MsgType,
 }
 
 impl MavlinkPacket {
-    pub fn new(message_type: MessageType) -> Self {
+    pub fn new(message_type: MsgType) -> Self {
         Self {
             incompat_flags: 0,
             compat_flags: 0,
@@ -144,13 +144,15 @@ impl MavlinkPacket {
         }
     }
 
-    pub fn to_buf(&self, buf: &mut [u8], payload: &[u8], payload_len: u8) {
+    pub fn to_buf(&self, buf: &mut [u8], payload: &[u8]) {
         // todo: Error handling on buffer len.
+
+        let payload_len = self.message_type.payload_size();
 
         let checksum = crc_calculate(payload, payload_len as u16, self.message_type.crc_extra());
 
         buf[0] = MAVLINK_MSG_START;
-        buf[1] = payload_len;
+        buf[1] = payload_len as u8;
         buf[2] = self.incompat_flags;
         buf[3] = self.compat_flags;
         buf[4] = self.sequence_number;

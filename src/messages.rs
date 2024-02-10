@@ -1,4 +1,4 @@
-use crate::MessageType;
+use crate::MsgType;
 
 use lin_alg::f32::Quaternion;
 
@@ -25,8 +25,8 @@ impl GimbalDeviceSetAttitude {
         }
     }
 
-    pub fn to_bytes(&self) -> [u8; MessageType::GimbalDeviceSetAttitude.payload_size()] {
-        let mut result = [0; MessageType::GimbalDeviceSetAttitude.payload_size()];
+    pub fn to_bytes(&self) -> [u8; MsgType::GimbalDeviceSetAttitude.payload_size()] {
+        let mut result = [0; MsgType::GimbalDeviceSetAttitude.payload_size()];
 
         result[0] = self.target_system;
         result[1] = self.target_component;
