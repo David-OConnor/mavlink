@@ -40,8 +40,8 @@ impl MsgType {
             Self::VehicleToGc => 48,
             Self::GcToVehicle => 29,
             Self::SystemStatus => 2,
-            Self::GimbalDeviceSetAttitude => 99,
-            Self::GimbalDeviceAttitudeStatus => 137,
+            Self::GimbalDeviceSetAttitude => 32,
+            Self::GimbalDeviceAttitudeStatus => 285, // todo
         }
     }
 
@@ -50,9 +50,8 @@ impl MsgType {
             Self::VehicleToGc => 0,
             Self::GcToVehicle => 0,
             Self::SystemStatus => 0,
-            // todo!
-            Self::GimbalDeviceSetAttitude => 69,
-            Self::GimbalDeviceAttitudeStatus => 69,
+            Self::GimbalDeviceSetAttitude => 99,
+            Self::GimbalDeviceAttitudeStatus => 137,
         }
     }
 
